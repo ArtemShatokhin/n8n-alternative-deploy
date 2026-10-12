@@ -1,0 +1,55 @@
+# docker-compose.yml - the Kortix self-host stack.
+#
+# Kortix self-hosts as one Docker Compose stack: the frontend, the API, the
+# LLM gateway, and the Supabase distribution. The supported install renders
+# this stack and starts it for you, so run the CLI rather than this file:
+#
+#   curl -fsSL https://kortix.com/install | bash
+#   kortix self-host init --domain kortix.example.com
+#   kortix self-host start
+#
+# `kortix self-host` fills every ${...} value below from the instance .env and
+# pins the Supabase distribution images. This file is a readable mirror of the
+# stack topology, not a hand-run compose file.
+#
+# Agent sessions do not run in this stack. Each session runs on a separate
+# sandbox provider (Daytona by default; Platinum and E2B are also supported),
+# set with `kortix self-host configure`. The instance must stay reachable so a
+# cloud sandbox can call back to the API.
+
+services:
+  # The web app. Serves the dashboard and talks to the API in-network.
+  frontend:
+    image: ${FRONTEND_IMAGE}
+    environment:
+      KORTIX_API_PROXY_TARGET: http://kortix-api:8008
+      KORTIX_PUBLIC_APP_URL: ${PUBLIC_URL}
+    depends_on:
+      - kortix-api
+    restart: unless-stopped
+
+  # The API. Holds project state and serves the public /v1 routes.
+  # Each API container has a 640 MiB memory limit by default; raise it on a
+  # 16 GiB host with: kortix self-host env set KORTIX_API_MEMORY_LIMIT=1024m
+  kortix-api:
+    image: ${API_IMAGE}
+    ports:
+      - "127.0.0.1:${API_PORT}:8008"
+    env_file:
+      - .env
+    environment:
+      PORT: "8008"
+      LLM_GATEWAY_ENABLED: "true"
+      LLM_GATEWAY_PROXY_TARGET: http://llm-gateway:8090
+    depends_on:
+      - llm-gateway
+    restart: unless-stopped
+
+  # The LLM gateway. Authenticates model-provider requests server-side, so a
+  # provider key never reaches a user or an agent.
+  llm-gateway:
+    image: ${GATEWAY_IMAGE}
+    environment:
+      PORT: "8090"
+      KORTIX_API_URL: http://kortix-api:8008
+    restart: unless-stopped
