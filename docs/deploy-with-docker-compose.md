@@ -39,7 +39,7 @@ The tunnel URL changes on every restart, so run production on a real domain.
 
 ## What it needs, and what it does not
 
-A self-hosted instance needs outbound network access; it is not an offline install. It pulls images from `docker.io/kortix/*`, and sessions never run on the box. The one credential the stack cannot start without is the sandbox provider key, set with `kortix self-host configure`; Daytona is the default, with Platinum and E2B also supported. There is no Redis and no separate worker. Each API service defaults to a 640 MiB memory limit, which suits an 8 GiB host; raise it on a 16 GiB host with `kortix self-host env set KORTIX_API_MEMORY_LIMIT=1024m`.
+A self-hosted instance needs outbound network access; it is not an offline install. It pulls images from `docker.io/kortix/*`, and sessions never run on the box. The one credential the stack cannot start without is the sandbox provider key, set with `kortix self-host configure`; Platinum is the default, with Daytona available as a legacy fallback. There is no Redis and no separate worker. Each API service defaults to a 640 MiB memory limit, which suits an 8 GiB host; raise it on a 16 GiB host with `kortix self-host env set KORTIX_API_MEMORY_LIMIT=1024m`.
 
 ## Backups and updates
 
